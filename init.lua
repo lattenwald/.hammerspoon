@@ -31,7 +31,8 @@ end)
 -- BetterTouchTool replacement
 
 local cmd_c_to_ctrl_c = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
-    if hs.inspect(e:getFlags()) == hs.inspect({['cmd'] = true}) then
+    local f = e:getFlags()
+    if f['cmd'] and not f['shift'] and not f['ctrl'] and not f['alt'] and not f['fn'] then
       if e:getCharacters() == 'c' then
         return true, {hs.eventtap.keyStroke({'ctrl'}, 'c')}
       elseif e:getCharacters() == 'v' then
@@ -100,7 +101,7 @@ local rstudio_eventtap = hs.eventtap.new({hs.eventtap.event.types.keyDown}, func
     -- hs.alert.show(hs.inspect(code))
 end)
 
-local emacsWatcher = hs.application.watcher.new(function(app_name, event_type, app)
+local emacs_watcher = hs.application.watcher.new(function(app_name, event_type, app)
     if app_name ~= "Emacs" then return end
     if event_type == hs.application.watcher.activated then
       cmd_c_to_ctrl_c:start()
@@ -109,7 +110,7 @@ local emacsWatcher = hs.application.watcher.new(function(app_name, event_type, a
     end
 end)
 
-local chromeWatcher = hs.application.watcher.new(function(app_name, event_type, app)
+local chrome_watcher = hs.application.watcher.new(function(app_name, event_type, app)
     if app_name ~= "Google Chrome" then return end
     if event_type == hs.application.watcher.activated then
       chrome_eventtap:start()
@@ -118,7 +119,7 @@ local chromeWatcher = hs.application.watcher.new(function(app_name, event_type, 
     end
 end)
 
-local rstudioWatcher = hs.application.watcher.new(function(app_name, event_type, app)
+local rstudio_watcher = hs.application.watcher.new(function(app_name, event_type, app)
     if app_name ~= "RStudio" then return end
     if event_type == hs.application.watcher.activated then
       rstudio_eventtap:start()
@@ -127,6 +128,6 @@ local rstudioWatcher = hs.application.watcher.new(function(app_name, event_type,
     end
 end)
 
-emacsWatcher:start()
-chromeWatcher:start()
-rstudioWatcher:start()
+emacs_watcher:start()
+chrome_watcher:start()
+rstudio_watcher:start()
