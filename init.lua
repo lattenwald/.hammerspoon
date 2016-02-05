@@ -1,6 +1,6 @@
 hs.hotkey.bind({"cmd", "alt", "ctrl"}, "W",
   function()
-    hs.alert.show("Hello World!")
+    hs.alert.show("Hello World from Hammerspoon!")
     hs.notify.new({title="Hammerspoon", informativeText="Hello World"}):send()
   end
 )
@@ -30,104 +30,68 @@ end)
 
 -- BetterTouchTool replacement
 
-local cmd_c_to_ctrl_c = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
-    local f = e:getFlags()
-    if f['cmd'] and not f['shift'] and not f['ctrl'] and not f['alt'] and not f['fn'] then
-      if e:getCharacters() == 'c' then
-        return true, {hs.eventtap.keyStroke({'ctrl'}, 'c')}
-      elseif e:getCharacters() == 'v' then
-        return true, {hs.eventtap.keyStroke({'ctrl'}, 'v')}
+modifiers = {'cmd', 'alt', 'ctrl', 'shift'}
+
+require 'remap'
+
+function contains(list, elem)
+  for i = 1, #list do
+    if list[i] == elem then return true end
+  end
+  return false
+end
+
+function check_flags(flags, check)
+  for i = 1, #modifiers do
+    local mod = modifiers[i]
+    if contains(check, mod) then
+      if not flags[mod] then return false end
+    else
+      if flags[mod] then return false end
+    end
+  end
+  return true
+end
+
+local et = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
+    local win = hs.window.focusedWindow()
+    if win then
+      local app = win:application():title()
+      if app and keyboard_remap[app] then
+        local remap = keyboard_remap[app]
+        local f = e:getFlags()
+        local code = e:getKeyCode()
+        for key, fire in pairs(remap) do
+          if check_flags(f, key[1]) and code == key[2] then
+            hs.alert.show(hs.inspect(fire))
+            return true, {hs.eventtap.keyStroke(fire[1], fire[2])}
+          end
+        end
       end
     end
 end)
 
-local chrome_eventtap = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
+-- dev utils
+
+et:start()
+
+local show_all_enabled = false
+local show_all_eventtap = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
     local f = e:getFlags()
     local code = e:getKeyCode()
     local char = e:getCharacters(true)
-    if f['cmd'] and not f['shift'] and not f['ctrl'] and not f['alt'] and not f['fn'] then
-      if char == 'q' then
-        return true, {hs.eventtap.keyStroke({'cmd'}, 'w')}
-      end
-    elseif not f['cmd'] and not f['shift'] and not f['ctrl'] and not f['alt'] and f['fn'] then
-      if code == hs.keycodes.map['f5'] then
-        return false, {hs.eventtap.keyStroke({'cmd'}, 'r')}
-      elseif code == hs.keycodes.map['f11'] then
-        return false, {hs.eventtap.keyStroke({'cmd', 'shift'}, 'f')}
-      elseif code == hs.keycodes.map['f6'] then
-        return false, {hs.eventtap.keyStroke({'cmd'}, 'l')}
-      elseif code == hs.keycodes.map['f3'] then
-        return false, {hs.eventtap.keyStroke({'cmd'}, 'g')}
-      elseif code == hs.keycodes.map['f12'] then
-        return false, {hs.eventtap.keyStroke({'cmd', 'alt'}, 'i')}
-      end
-    elseif not f['cmd'] and not f['shift'] and f['ctrl'] and not f['alt'] and not f['fn'] then
-      if char == 'o' then
-        return true, {hs.eventtap.keyStroke({'cmd', 'shift'}, 'o')}
-      elseif char == 'u' then
-        return true, {hs.eventtap.keyStroke({'cmd', 'alt'}, 'u')}
-      end
-    elseif not f['cmd'] and f['shift'] and f['ctrl'] and not f['alt'] and not f['fn'] then
-      if char == 'T' then
-        return true, {hs.eventtap.keyStroke({'cmd', 'shift'}, 't')}
-      end
-    end
+    hs.alert.show("flags: " .. hs.inspect(f) ..
+                    "\ncode: " .. hs.inspect(code) ..
+                    ", char: " .. hs.inspect(char))
 end)
 
-local rstudio_eventtap = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
-    local f = e:getFlags()
-    local code = e:getKeyCode()
-    local char = e:getCharacters(true)
-    if not f['cmd'] and not f['shift'] and f['ctrl'] and not f['alt'] and f['fn'] then
-      if code == hs.keycodes.map['pageup'] then
-        return true, {hs.eventtap.keyStroke({'ctrl'}, 'f11')}
-      elseif code == hs.keycodes.map['pagedown'] then
-        return true, {hs.eventtap.keyStroke({'ctrl'}, 'f12')}
-      end
-    elseif f['cmd'] and not f['shift'] and not f['ctrl'] and not f['alt'] and f['fn'] then
-      if code == hs.keycodes.map['up'] then
-        return true, {hs.eventtap.keyStroke({'ctrl'}, '1')}
-      elseif code == hs.keycodes.map['down'] then
-        return true, {hs.eventtap.keyStroke({'ctrl'}, '2')}
-      end
-    -- elseif not f['cmd'] and not f['shift'] and f['ctrl'] and not f['alt'] and f['fn'] then
-    --   if code == hs.keycodes.map['left'] then
-    --     return true, {hs.eventtap.keyStroke({'alt'}, 'left')}
-    --   elseif code == hs.keycodes.map['right'] then
-    --     return true, {hs.eventtap.keyStroke({'alt'}, 'right')}
-    --   end
+hs.hotkey.bind({'cmd', 'alt', 'ctrl'}, 's', function()
+    if show_all_enabled then
+      hs.alert.show('not showing events')
+      show_all_eventtap:stop()
+    else
+      hs.alert.show('showing events')
+      show_all_eventtap:start()
     end
-    -- hs.alert.show(hs.inspect(f))
-    -- hs.alert.show(hs.inspect(code))
+    show_all_enabled = not show_all_enabled
 end)
-
-local emacs_watcher = hs.application.watcher.new(function(app_name, event_type, app)
-    if app_name ~= "Emacs" then return end
-    if event_type == hs.application.watcher.activated then
-      cmd_c_to_ctrl_c:start()
-    elseif event_type == hs.application.watcher.deactivated then
-      cmd_c_to_ctrl_c:stop()
-    end
-end)
-
-local chrome_watcher = hs.application.watcher.new(function(app_name, event_type, app)
-    if app_name ~= "Google Chrome" then return end
-    if event_type == hs.application.watcher.activated then
-      chrome_eventtap:start()
-    elseif event_type == hs.application.watcher.deactivated then
-      chrome_eventtap:stop()
-    end
-end)
-
-local rstudio_watcher = hs.application.watcher.new(function(app_name, event_type, app)
-    if app_name ~= "RStudio" then return end
-    if event_type == hs.application.watcher.activated then
-      rstudio_eventtap:start()
-    elseif event_type == hs.application.watcher.deactivated then
-      rstudio_eventtap:stop()
-    end
-end)
-
-emacs_watcher:start()
-chrome_watcher:start()
-rstudio_watcher:start()
