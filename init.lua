@@ -63,7 +63,7 @@ local et = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
         local code = e:getKeyCode()
         for key, fire in pairs(remap) do
           if check_flags(f, key[1]) and code == key[2] then
-            hs.alert.show(hs.inspect(fire))
+            hs.alert.show(fire[3] or hs.inspect(fire), 0.3)
             return true, {hs.eventtap.keyStroke(fire[1], fire[2])}
           end
         end
