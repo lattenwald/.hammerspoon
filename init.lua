@@ -1,9 +1,4 @@
-hs.hotkey.bind({"cmd", "alt", "ctrl"}, "W",
-  function()
-    hs.alert.show("Hello World from Hammerspoon!")
-    hs.notify.new({title="Hammerspoon", informativeText="Hello World"}):send()
-  end
-)
+local chord = {'cmd', 'alt', 'ctrl'}
 
 function withFocusedWindow(func)
   local win = hs.window.focusedWindow()
@@ -16,16 +11,6 @@ end
 
 hs.hotkey.bind({"cmd"}, "f10", function()
     withFocusedWindow(function(win) win:maximize() end)
-end)
-
-hs.hotkey.bind({"cmd", "alt", "ctrl"}, "i", function()
-    withFocusedWindow(function(win)
-        hs.alert.show("win " .. hs.inspect(win:title()) ..
-                        "\napp " .. hs.inspect(win:application():title()) ..
-                        "\nrole " .. hs.inspect(win:role()) ..
-                        "\nsubrole " .. hs.inspect(win:subrole())
-        )
-    end)
 end)
 
 -- BetterTouchTool replacement
@@ -85,7 +70,7 @@ local show_all_eventtap = hs.eventtap.new({hs.eventtap.event.types.keyDown}, fun
                     ", char: " .. hs.inspect(char))
 end)
 
-hs.hotkey.bind({'cmd', 'alt', 'ctrl'}, 's', function()
+hs.hotkey.bind(chord, 's', function()
     if show_all_enabled then
       hs.alert.show('not showing events')
       show_all_eventtap:stop()
@@ -95,3 +80,31 @@ hs.hotkey.bind({'cmd', 'alt', 'ctrl'}, 's', function()
     end
     show_all_enabled = not show_all_enabled
 end)
+
+hs.hotkey.bind(chord, "W",
+  function()
+    hs.alert.show("Hello World from Hammerspoon!")
+    hs.notify.new({title="Hammerspoon", informativeText="Hello World"}):send()
+  end
+)
+
+hs.hotkey.bind(chord, "i", function()
+    withFocusedWindow(function(win)
+        hs.alert.show("win " .. hs.inspect(win:title()) ..
+                        "\napp " .. hs.inspect(win:application():title()) ..
+                        "\nrole " .. hs.inspect(win:role()) ..
+                        "\nsubrole " .. hs.inspect(win:subrole())
+        )
+    end)
+end)
+
+hs.timer.doEvery(5, function()
+                   if not et:isEnabled() then
+                     hs.alert.show('et is disabled, wtf')
+                     et:start()
+                   end
+end)
+
+-- hs.hotkey.bind(chord, 'a', function()
+--                  hs.alert.show(hs.inspect(hs.window.allWindows()))
+-- end)
