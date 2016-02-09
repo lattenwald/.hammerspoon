@@ -86,13 +86,17 @@ et_keydown:start()
 
 -- imgur screenshoter
 hk.bind({'cmd', 'shift'}, '2', function()
-    local screenshot = hs.task.new('/usr/local/bin/imgur-screenshot.sh', function(code, stdOut, stdErr)
+    local screenshot = hs.task.new('/usr/local/bin/imgur-screenshot.sh',
+                                   function(code, stdOut, stdErr)
                                      if code == 0 then
                                        a.show('Screenshot taken, URL in pasteboard')
                                      else
                                        a.show('Something went wrong')
                                      end
-    end)
+                                   end,
+                                   function() return true end,
+                                   {"-o", "false"}
+    )
     screenshot:start()
 end)
 
