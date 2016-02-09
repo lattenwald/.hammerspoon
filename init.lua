@@ -1,21 +1,47 @@
+-- tools
+-- http://lua-users.org/wiki/StringRecipes
+function string.starts(String,Start)
+   return string.sub(String,1,string.len(Start))==Start
+end
+
+function string.ends(String,End)
+   return End=='' or string.sub(String,-string.len(End))==End
+end
+
+-- modules
+
+-- https://github.com/asmagill/hs._asm.undocumented.spaces
+spaces = require("hs._asm.undocumented.spaces")
+
+-- aliases to save some typing
+a  = require("hs.alert")
+w  = require("hs.window")
+hk = require("hs.hotkey")
+et = require("hs.eventtap")
+i  = require("hs.inspect")
+
+-- constants
+modifiers = {'cmd', 'alt', 'ctrl', 'shift'}
+
+-- settings
 local chord = {'cmd', 'alt', 'ctrl'}
+local hangouts_space = 5
 
 function withFocusedWindow(func)
-  local win = hs.window.focusedWindow()
+  local win = w.focusedWindow()
   if win then
     func(win)
   else
-    hs.alert.show("No focused window")
+    a.show("No focused window")
   end
 end
 
-hs.hotkey.bind({"cmd"}, "f10", function()
+hk.bind({"cmd"}, "f10", function()
     withFocusedWindow(function(win) win:maximize() end)
 end)
 
 -- BetterTouchTool replacement
 
-modifiers = {'cmd', 'alt', 'ctrl', 'shift'}
 
 require 'remap'
 
@@ -38,8 +64,8 @@ function check_flags(flags, check)
   return true
 end
 
-local et = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
-    local win = hs.window.focusedWindow()
+local et_keydown = et.new({et.event.types.keyDown}, function(e)
+    local win = w.focusedWindow()
     if win then
       local app = win:application():title()
       if app and keyboard_remap[app] then
@@ -48,63 +74,129 @@ local et = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
         local code = e:getKeyCode()
         for key, fire in pairs(remap) do
           if check_flags(f, key[1]) and code == key[2] then
-            hs.alert.show(fire[3] or hs.inspect(fire), 0.3)
-            return true, {hs.eventtap.keyStroke(fire[1], fire[2])}
+            a.show(fire[3] or i(fire), 0.3)
+            return true, {et.keyStroke(fire[1], fire[2])}
           end
         end
       end
     end
 end)
 
--- dev utils
+et_keydown:start()
 
-et:start()
+-- imgur screenshoter
+hk.bind({'cmd', 'shift'}, '2', function()
+    local screenshot = hs.task.new('/usr/local/bin/imgur-screenshot.sh', function(code, stdOut, stdErr)
+                                     if code == 0 then
+                                       a.show('Screenshot taken, URL in pasteboard')
+                                     else
+                                       a.show('Something went wrong')
+                                     end
+    end)
+    screenshot:start()
+end)
+
+-- utils
 
 local show_all_enabled = false
-local show_all_eventtap = hs.eventtap.new({hs.eventtap.event.types.keyDown}, function(e)
+local show_all_eventtap = et.new({et.event.types.keyDown}, function(e)
     local f = e:getFlags()
     local code = e:getKeyCode()
     local char = e:getCharacters(true)
-    hs.alert.show("flags: " .. hs.inspect(f) ..
-                    "\ncode: " .. hs.inspect(code) ..
-                    ", char: " .. hs.inspect(char))
+    a.show("flags: " .. i(f) ..
+                    "\ncode: " .. i(code) ..
+                    ", char: " .. i(char))
 end)
 
-hs.hotkey.bind(chord, 's', function()
+hk.bind(chord, 's', function()
     if show_all_enabled then
-      hs.alert.show('not showing events')
+      a.show('not showing events')
       show_all_eventtap:stop()
     else
-      hs.alert.show('showing events')
+      a.show('showing events')
       show_all_eventtap:start()
     end
     show_all_enabled = not show_all_enabled
 end)
 
-hs.hotkey.bind(chord, "W",
+hk.bind(chord, "W",
   function()
-    hs.alert.show("Hello World from Hammerspoon!")
+    a.show("Hello World from Hammerspoon!")
     hs.notify.new({title="Hammerspoon", informativeText="Hello World"}):send()
   end
 )
 
-hs.hotkey.bind(chord, "i", function()
+hk.bind(chord, "i", function()
     withFocusedWindow(function(win)
-        hs.alert.show("win " .. hs.inspect(win:title()) ..
-                        "\napp " .. hs.inspect(win:application():title()) ..
-                        "\nrole " .. hs.inspect(win:role()) ..
-                        "\nsubrole " .. hs.inspect(win:subrole())
+        a.show("win " .. i(win:title()) ..
+                        "\napp " .. i(win:application():title()) ..
+                        "\nrole " .. i(win:role()) ..
+                        "\nsubrole " .. i(win:subrole())
         )
     end)
 end)
 
 hs.timer.doEvery(5, function()
-                   if not et:isEnabled() then
-                     hs.alert.show('et is disabled, wtf')
-                     et:start()
+                   if not et_keydown:isEnabled() then
+                     hs.notify.new({title="Hammerspoon", informativeText="eventtap et_keydown is disabled, wtf"}):send()
+                     et_keydown:start()
                    end
 end)
 
--- hs.hotkey.bind(chord, 'a', function()
---                  hs.alert.show(hs.inspect(hs.window.allWindows()))
+-- hk.bind(chord, 'a', function()
+--                  a.show(i(w.allWindows()))
 -- end)
+
+
+
+-- from https://github.com/BrianGilbert/.hammerspoon/blob/master/init.lua
+--
+-- Monitor and reload config when required
+--
+-- function reload_config(files)
+--   hs.reload()
+-- end
+-- hs.pathwatcher.new(os.getenv("HOME") .. "/.hammerspoon/", reload_config):start()
+-- a.show("Config loaded")
+
+hk.bind(chord, "r", function()
+                 hs.reload()
+                 a.show("Hammerspoon config reloaded")
+end)
+
+
+-- from http://larryhynes.net/2015/04/a-minor-update-to-my-hammerspoon-config.html
+-----------------------------------------------
+-- Hyper i to show window hints
+-----------------------------------------------
+
+hk.bind(chord, 'h', function()
+    hs.hints.windowHints()
+end)
+
+hk.bind({'cmd'}, '`', function()
+    hs.hints.windowHints()
+end)
+
+
+-- move hangouts to 4th space --
+local hangouts_watcher = hs.application.watcher.new(function(app_name, event_type, app)
+    if (app_name == "Google Chrome"
+        and event_type == hs.application.watcher.activated) then
+      local win = w.focusedWindow()
+      local win_title = win:title()
+      if (string.starts(win_title, "Hangouts ")
+            and string.ends(win_title, "@gmail.com")
+            and spaces.activeSpace() ~= hangouts_space
+      ) then
+        a.show("Hangouts moved to space " .. i(hangouts_space))
+        spaces.moveWindowToSpace(win:id(), hangouts_space)
+      end
+    end
+end)
+hangouts_watcher:start()
+
+-- window filters
+-- wf = require("hs.window.filter")
+-- wf_topscreen = wf.new{override={visible=true,fullscreen=false,allowScreens='0,-1',currentSpace=true}}
+-- wf_curscreen = wf.new{override={visible=true,fullscreen=false,allowScreens='0,0',currentSpace=true}}
