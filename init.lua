@@ -25,7 +25,7 @@ modifiers = {'cmd', 'alt', 'ctrl', 'shift'}
 
 -- settings
 local chord = {'cmd', 'alt', 'ctrl'}
-local hangouts_space = 5
+local hangouts_space = 6
 
 function withFocusedWindow(func)
   local win = w.focusedWindow()
@@ -178,9 +178,9 @@ hk.bind(chord, 'h', function()
     hs.hints.windowHints()
 end)
 
-hk.bind({'cmd'}, '`', function()
-    hs.hints.windowHints()
-end)
+-- hk.bind({'cmd'}, '`', function()
+--     hs.hints.windowHints()
+-- end)
 
 
 -- move hangouts to 4th space --
@@ -204,3 +204,10 @@ hangouts_watcher:start()
 -- wf = require("hs.window.filter")
 -- wf_topscreen = wf.new{override={visible=true,fullscreen=false,allowScreens='0,-1',currentSpace=true}}
 -- wf_curscreen = wf.new{override={visible=true,fullscreen=false,allowScreens='0,0',currentSpace=true}}
+
+hs.caffeinate.set("system", true, true)
+hs.caffeinate.set("systemIdle", true, true)
+
+hk.bind(chord, "l", function()
+          hs.caffeinate.startScreensaver()
+end)
