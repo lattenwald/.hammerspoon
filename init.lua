@@ -205,8 +205,25 @@ hangouts_watcher:start()
 -- wf_topscreen = wf.new{override={visible=true,fullscreen=false,allowScreens='0,-1',currentSpace=true}}
 -- wf_curscreen = wf.new{override={visible=true,fullscreen=false,allowScreens='0,0',currentSpace=true}}
 
-hs.caffeinate.set("system", true, true)
-hs.caffeinate.set("systemIdle", true, true)
+-- caffeinate
+hk.bind(chord, ']', function()
+          local sleepType = "system"
+          local sleepAllowed = hs.caffeinate.get(sleepType)
+          if sleepAllowed == nil then
+            a.show("invalid sleep type: " .. sleepType)
+            return
+          end
+
+          hs.caffeinate.set(sleepType, not(sleepAllowed), true)
+          local str
+          if hs.caffeinate.get(sleepType) then
+            str = "disallowed"
+          else
+            str = "allowed"
+          end
+
+          a.show("[" .. sleepType .. "] sleep " .. str)
+end)
 
 hk.bind(chord, "l", function()
           hs.caffeinate.startScreensaver()
