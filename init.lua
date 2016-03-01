@@ -208,21 +208,16 @@ hangouts_watcher:start()
 -- caffeinate
 hk.bind(chord, ']', function()
           local sleepType = "system"
-          local sleepAllowed = hs.caffeinate.get(sleepType)
-          if sleepAllowed == nil then
+          local sleepPrevented = hs.caffeinate.toggle(sleepType)
+
+          if sleepPrevented == nil then
             a.show("invalid sleep type: " .. sleepType)
             return
-          end
-
-          hs.caffeinate.set(sleepType, not(sleepAllowed), true)
-          local str
-          if hs.caffeinate.get(sleepType) then
-            str = "disallowed"
+          elseif sleepPrevented then
+            a.show("[" .. sleepType .. "] prevented")
           else
-            str = "allowed"
+            a.show("[" .. sleepType .. "] allowed")
           end
-
-          a.show("[" .. sleepType .. "] sleep " .. str)
 end)
 
 hk.bind(chord, "l", function()
