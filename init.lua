@@ -184,21 +184,21 @@ end)
 
 
 -- move hangouts to 4th space --
-local hangouts_watcher = hs.application.watcher.new(function(app_name, event_type, app)
-    if (app_name == "Google Chrome"
-        and event_type == hs.application.watcher.activated) then
-      local win = w.focusedWindow()
-      local win_title = win:title()
-      if (string.starts(win_title, "Hangouts ")
-            and string.ends(win_title, "@gmail.com")
-            and spaces.activeSpace() ~= hangouts_space
-      ) then
-        a.show("Hangouts moved to space " .. i(hangouts_space))
-        spaces.moveWindowToSpace(win:id(), hangouts_space)
-      end
-    end
-end)
-hangouts_watcher:start()
+-- local hangouts_watcher = hs.application.watcher.new(function(app_name, event_type, app)
+--     if (app_name == "Google Chrome"
+--         and event_type == hs.application.watcher.activated) then
+--       local win = w.focusedWindow()
+--       local win_title = win:title()
+--       if (string.starts(win_title, "Hangouts ")
+--             and string.ends(win_title, "@gmail.com")
+--             and spaces.activeSpace() ~= hangouts_space
+--       ) then
+--         a.show("Hangouts moved to space " .. i(hangouts_space))
+--         spaces.moveWindowToSpace(win:id(), hangouts_space)
+--       end
+--     end
+-- end)
+-- hangouts_watcher:start()
 
 -- window filters
 -- wf = require("hs.window.filter")
