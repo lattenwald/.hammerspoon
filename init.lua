@@ -19,6 +19,7 @@ w  = require("hs.window")
 hk = require("hs.hotkey")
 et = require("hs.eventtap")
 i  = require("hs.inspect")
+c  = require("hs.console")
 
 -- constants
 modifiers = {'cmd', 'alt', 'ctrl', 'shift'}
@@ -64,25 +65,36 @@ function check_flags(flags, check)
   return true
 end
 
-local et_keydown = et.new({et.event.types.keyDown}, function(e)
-    local win = w.focusedWindow()
-    if win then
-      local app = win:application():title()
-      if app and keyboard_remap[app] then
-        local remap = keyboard_remap[app]
-        local f = e:getFlags()
-        local code = e:getKeyCode()
-        for key, fire in pairs(remap) do
-          if check_flags(f, key[1]) and code == key[2] then
-            a.show(fire[3] or i(fire), 0.3)
-            return true, {et.keyStroke(fire[1], fire[2])}
-          end
+local et_kdown = {}
+for app_name, remap in pairs(keyboard_remap) do
+  c.printStyledtext("creating etkdn for " .. app_name)
+  local etkdn = et.new({et.event.types.keyDown}, function(e)
+      local f = e:getFlags()
+      local code = e:getKeyCode()
+      for key, fire in pairs(remap) do
+        if check_flags(f, key[1]) and code == key[2] then
+          a.show(fire[3] or i(fire), 0.3)
+          return true, {et.keyStroke(fire[1], fire[2])}
         end
       end
-    end
-end)
+  end)
+  et_kdown[app_name] = etkdn
+end
 
-et_keydown:start()
+local win_watcher = hs.application.watcher.new(
+  function(app_name, event_type, app)
+    local etkdn = et_kdown[app_name]
+    if not(etkdn) then return end
+    if event_type == hs.application.watcher.activated then
+      c.printStyledtext("Starting et_kdown for " .. app_name)
+      etkdn:start()
+    else
+      c.printStyledtext("Stopping et_kdown for " .. app_name)
+      etkdn:stop()
+    end
+  end
+)
+win_watcher:start()
 
 -- imgur screenshoter
 hk.bind({'cmd', 'shift'}, '2', function()
@@ -140,19 +152,6 @@ hk.bind(chord, "i", function()
     end)
 end)
 
-hs.timer.doEvery(5, function()
-                   if not et_keydown:isEnabled() then
-                     hs.notify.new({title="Hammerspoon", informativeText="eventtap et_keydown is disabled, wtf"}):send()
-                     et_keydown:start()
-                   end
-end)
-
--- hk.bind(chord, 'a', function()
---                  a.show(i(w.allWindows()))
--- end)
-
-
-
 -- from https://github.com/BrianGilbert/.hammerspoon/blob/master/init.lua
 --
 -- Monitor and reload config when required
@@ -165,7 +164,7 @@ end)
 
 hk.bind(chord, "r", function()
                  hs.reload()
-                 a.show("Hammerspoon config reloaded")
+                 a.show("Hammerspoon config reloading")
 end)
 
 
@@ -177,11 +176,6 @@ end)
 hk.bind(chord, 'h', function()
     hs.hints.windowHints()
 end)
-
--- hk.bind({'cmd'}, '`', function()
---     hs.hints.windowHints()
--- end)
-
 
 -- move hangouts to 4th space --
 -- local hangouts_watcher = hs.application.watcher.new(function(app_name, event_type, app)
