@@ -12,10 +12,10 @@ chrome_remap[{{}, hs.keycodes.map['f5']}] = {{'cmd'}, 'r', 'refresh'}
 chrome_remap[{{}, hs.keycodes.map['f6']}] = {{'cmd'}, 'l', 'url bar'}
 chrome_remap[{{}, hs.keycodes.map['f11']}] = {{'cmd', 'ctrl'}, 'f', 'fullscreen'}
 chrome_remap[{{}, hs.keycodes.map['f12']}] = {{'cmd', 'alt'}, 'i', 'devtools'}
--- chrome_remap[{{'ctrl'}, hs.keycodes.map['o']}] = {{'cmd', 'shift'}, 'o'}
 chrome_remap[{{'ctrl'}, hs.keycodes.map['u']}] = {{'cmd', 'alt'}, 'u', 'view source'}
 chrome_remap[{{'ctrl', 'shift'}, hs.keycodes.map['t']}] = {{'cmd', 'shift'}, 't' ,'restore tab'}
 chrome_remap[{{'ctrl'}, hs.keycodes.map['j']}] = {{'cmd', 'shift'}, 'j', 'downloads'}
+chrome_remap[{{'ctrl'}, hs.keycodes.map['h']}] = {{'cmd'}, 'y', 'history'}
 keyboard_remap['Google Chrome'] = chrome_remap
 
 local rstudio_remap = {}
