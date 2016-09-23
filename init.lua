@@ -95,6 +95,7 @@ local win_watcher = hs.application.watcher.new(
   end
 )
 win_watcher:start()
+hs.timer.doEvery(5, function() win_watcher:start() end)
 
 -- imgur screenshoter
 hk.bind({'cmd', 'shift'}, '2', function()
